@@ -11,10 +11,10 @@ interface KanbanColumn {
   id: string
   title: string
   tasks: Task[]
-  color: string
+  color?: string
   icon: React.ReactNode
   bgColor: string
-  accentColor: string
+  accentColor?: string
 }
 
 interface TaskKanbanProps {
@@ -437,10 +437,10 @@ export function TaskKanban({ tasks, onTaskStatusChange, isLoading, onTaskUpdate,
               {tasks
                 .filter(t => t.status === "done" || t.completed)
                 .sort((a, b) => {
-                  // Sort by completion date (newest first) - optional, remove if not needed
-                  const aDate = new Date(a.completedAt || a.updatedAt || 0).getTime()
-                  const bDate = new Date(b.completedAt || b.updatedAt || 0).getTime()
-                  return bDate - aDate
+                  // Sort by task completion status (in progress first, then by ID for consistency)
+                  const aCompleted = a.completed ? 1 : 0
+                  const bCompleted = b.completed ? 1 : 0
+                  return aCompleted - bCompleted || a.id.localeCompare(b.id)
                 })
                 .map((task) => (
                   <div

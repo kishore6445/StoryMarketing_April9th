@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronLeft, ChevronRight, Edit2, Trash2, Merge2, Plus, Send, Calendar, CheckCircle2, AlertCircle } from "lucide-react"
+import { ChevronLeft, ChevronRight, Edit2, Trash2, Merge, Plus, Send, Calendar, CheckCircle2, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface TimeEntry {
@@ -195,7 +195,7 @@ export default function DailyReportRedesigned() {
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button className="p-1.5 hover:bg-gray-100 rounded text-gray-600 transition-colors" title="Merge">
-                          <Merge2 className="w-4 h-4" />
+                          <Merge className="w-4 h-4" />
                         </button>
                       </div>
                       <button

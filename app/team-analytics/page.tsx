@@ -1,11 +1,7 @@
-import { Metadata } from "next"
+"use client"
+
 import { TeamAnalyticsDashboard } from "@/components/team-analytics-dashboard"
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail"
-
-export const metadata: Metadata = {
-  title: "Team Analytics",
-  description: "View comprehensive team performance metrics and analytics",
-}
 
 export default function TeamAnalyticsPage() {
   return (

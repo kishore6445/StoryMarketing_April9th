@@ -1,3 +1,5 @@
+"use client"
+
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail"
 import { BacklogDashboard } from "@/components/backlog-dashboard"
 
