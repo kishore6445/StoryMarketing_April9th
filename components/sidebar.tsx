@@ -221,6 +221,11 @@ const advancedFeatures = [
     name: "Admin User Management",
     icon: UserPlus,
   },
+  {
+    id: "admin-settings",
+    name: "Admin Settings",
+    icon: Settings,
+  },
 ]
 
 const statusLabels = {
@@ -599,7 +604,13 @@ export function Sidebar({ currentPhase, onPhaseChange }: SidebarProps) {
                     return (
                       <button
                         key={feature.id}
-                        onClick={() => onPhaseChange(feature.id)}
+                        onClick={() => {
+                          if (feature.id === "admin-settings") {
+                            router.push("/admin")
+                          } else {
+                            onPhaseChange(feature.id)
+                          }
+                        }}
                         className={cn(
                           "w-full flex items-center gap-3 px-3 py-2 rounded text-sm font-medium transition-all",
                           isActive 
