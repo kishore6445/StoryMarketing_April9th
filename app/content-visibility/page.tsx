@@ -104,8 +104,10 @@ export default function ContentVisibilityPage() {
 
   // Handle marking content as production done
   const handleMarkProductionDone = (contentId: string) => {
+    console.log("[v0] Production done clicked for:", contentId)
     const content = pipelineRecords.find(r => r.id === contentId)
     if (content) {
+      console.log("[v0] Opening production sheet for:", content.title)
       setSelectedContentForProduction(content)
       setProductionSheetOpen(true)
     }
@@ -480,6 +482,7 @@ export default function ContentVisibilityPage() {
                 setShowAddModal(true)
                 setActiveTab("tracker")
               }}
+              onMarkProductionDone={handleMarkProductionDone}
             />
           </div>
         </div>
