@@ -10,8 +10,10 @@ import AddContentModal from "@/components/add-content-modal-cv"
 import { ContentPipelineStageView } from "@/components/content-pipeline-stage-view"
 import { ContentPipelineFlow } from "@/components/content-pipeline-flow"
 import { ProductionDoneSheet } from "@/components/production-done-sheet"
+import { PlatformBreakdownSection } from "@/components/platform-breakdown-section"
 import type { ContentRecordListItem } from "@/lib/content-records"
 import type { ProductionStatusData } from "@/lib/production-status-types"
+import { getClientTargets } from "@/lib/platform-targets-service"
 
 
 // Get current month
@@ -55,6 +57,7 @@ export default function ContentVisibilityPage() {
   const [productionSheetOpen, setProductionSheetOpen] = useState(false)
   const [selectedContentForProduction, setSelectedContentForProduction] = useState<ContentRecordListItem | null>(null)
   const [activeStageFilter, setActiveStageFilter] = useState<'target' | 'production_done' | 'scheduled' | 'published' | null>(null)
+  const [platformTargets, setPlatformTargets] = useState<Record<string, number>>({})
 
   useEffect(() => {
     const loadContentManagementData = async () => {
@@ -87,6 +90,23 @@ export default function ContentVisibilityPage() {
 
         setClients(clientsData.clients || [])
         setPipelineRecords(recordsData.records || [])
+
+        // Load platform targets for the selected client
+        if (selectedClient !== "All Clients") {
+          const targetClient = clientsData.clients?.find((c: any) => c.name === selectedClient)
+          if (targetClient) {
+            const currentYear = new Date().getFullYear()
+            const targets = await getClientTargets(targetClient.id, selectedMonth, currentYear)
+            const platformTargetsMap: Record<string, number> = {}
+            targets.forEach((target: any) => {
+              platformTargetsMap[target.platform] = target.target_count
+            })
+            setPlatformTargets(platformTargetsMap)
+          }
+        } else {
+          // For "All Clients", show aggregate targets (optional - can be enhanced later)
+          setPlatformTargets({})
+        }
       } catch (loadError) {
         console.error("[v0] Failed to load content management data:", loadError)
         setPageError(loadError instanceof Error ? loadError.message : "Failed to load content management data")
@@ -135,6 +155,13 @@ export default function ContentVisibilityPage() {
   // Handle pipeline stage click
   const handlePipelineStageClick = (stage: 'target' | 'production_done' | 'scheduled' | 'published') => {
     setActiveStageFilter(activeStageFilter === stage ? null : stage)
+  }
+
+  // Handle edit platform target
+  const handleEditPlatformTarget = (platform: string) => {
+    console.log("[v0] Edit target for platform:", platform)
+    // TODO: Open target editor modal for the selected platform
+    // This will be implemented when we add the TargetEditorModal integration
   }
 
   const clientOptions = ["All Clients", ...clients.map((client) => client.name)]
@@ -441,6 +468,16 @@ export default function ContentVisibilityPage() {
               </button>
             </div>
           )}
+
+          {/* Platform Breakdown - Collapsible section for per-platform tracking */}
+          <PlatformBreakdownSection
+            clientId={selectedClient !== "All Clients" ? clients.find(c => c.name === selectedClient)?.id || "" : "all"}
+            selectedMonth={selectedMonth}
+            selectedYear={new Date().getFullYear()}
+            platformTargets={platformTargets}
+            contentRecords={pipelineRecords}
+            onEditTarget={handleEditPlatformTarget}
+          />
         </div>
       )}
 
