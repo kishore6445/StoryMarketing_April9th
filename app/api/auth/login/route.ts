@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSession } from "@/lib/auth";
-import { getSupabaseClient, getUserByEmail } from "@/lib/db";
+import { getSupabaseAdminClient, getSupabaseClient, getUserByEmail } from "@/lib/db";
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,8 +30,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user from custom users table
-    const user = await getUserByEmail(email);
+    // Get user from custom users table.
+    // Prefer admin client in server routes to avoid RLS issues in production.
+    let user: any = null;
+    try {
+      const supabaseAdmin = getSupabaseAdminClient();
+      const { data } = await supabaseAdmin
+        .from("users")
+        .select("*")
+        .eq("email", email)
+        .maybeSingle();
+      user = data;
+    } catch (adminError) {
+      console.warn("[v0] Admin users lookup failed, falling back to anon client", adminError);
+      user = await getUserByEmail(email);
+    }
+
     if (!user) {
       return NextResponse.json(
         { error: "User profile not found" },

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { validateSession } from "@/lib/auth"
-import { getUser } from "@/lib/db"
+import { getSupabaseAdminClient, getUser } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,7 +20,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Invalid session" }, { status: 401 })
     }
 
-    const user = await getUser(session.userId)
+    let user: any = null
+    try {
+      const supabaseAdmin = getSupabaseAdminClient()
+      const { data } = await supabaseAdmin
+        .from("users")
+        .select("*")
+        .eq("id", session.userId)
+        .maybeSingle()
+      user = data
+    } catch (adminError) {
+      console.warn("[v0] Admin user lookup failed in /api/auth/me, falling back to anon client", adminError)
+      user = await getUser(session.userId)
+    }
     
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
