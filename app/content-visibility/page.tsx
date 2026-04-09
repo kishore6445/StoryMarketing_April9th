@@ -7,9 +7,7 @@ import { ContentClientPipeline } from "@/components/content-client-pipeline"
 import { ContentCalendarView } from "@/components/content-calendar-view"
 import ContentVisibilityTable from "@/components/content-visibility-table"
 import AddContentModal from "@/components/add-content-modal-cv"
-import { CommandCenterSummary } from "@/components/command-center-summary"
-import { BottleneckInsightRow } from "@/components/bottleneck-insight-row"
-import { ClientSnapshotRow } from "@/components/client-snapshot-row"
+import { ContentPipelineStageView } from "@/components/content-pipeline-stage-view"
 import { ContentPipelineFlow } from "@/components/content-pipeline-flow"
 import { ProductionDoneSheet } from "@/components/production-done-sheet"
 import type { ContentRecordListItem } from "@/lib/content-records"
@@ -104,10 +102,8 @@ export default function ContentVisibilityPage() {
 
   // Handle marking content as production done
   const handleMarkProductionDone = (contentId: string) => {
-    console.log("[v0] Production done clicked for:", contentId)
     const content = pipelineRecords.find(r => r.id === contentId)
     if (content) {
-      console.log("[v0] Opening production sheet for:", content.title)
       setSelectedContentForProduction(content)
       setProductionSheetOpen(true)
     }
@@ -395,18 +391,7 @@ export default function ContentVisibilityPage() {
       {/* Tab Content */}
       {activeTab === "pipeline" && (
         <div className="space-y-8">
-          {/* Command Center Summary - New Premium Redesign */}
-          <CommandCenterSummary
-            target={totals.planned}
-            productionDone={totals.scheduled - totals.published + totals.published}
-            scheduled={totals.scheduled}
-            published={totals.published}
-            clientName={selectedClient === "All Clients" ? `All Clients - ${selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1)}` : selectedClient}
-            platformMetrics={generatePlatformMetrics()}
-            isAllClients={selectedClient === "All Clients"}
-          />
-
-          {/* Content Pipeline Flow Visualization - Now Clickable */}
+          {/* HERO: Content Pipeline Flow - Large, Prominent, Clickable */}
           <ContentPipelineFlow
             target={totals.planned}
             productionDone={totals.scheduled - totals.published}
@@ -416,75 +401,46 @@ export default function ContentVisibilityPage() {
             activeStage={activeStageFilter}
           />
 
-          {/* Bottleneck Insights - New */}
-          <BottleneckInsightRow insights={generateInsights()} />
+          {/* Content organized by pipeline stage - Kanban-style view */}
+          <ContentPipelineStageView
+            items={pipelineRecords}
+            onMarkProductionDone={handleMarkProductionDone}
+            onEdit={(record) => {
+              setEditingRecord(record)
+              setShowAddModal(true)
+              setActiveTab("tracker")
+            }}
+            onDelete={async (record) => {
+              if (confirm(`Delete "${record.title}"?`)) {
+                try {
+                  const token = localStorage.getItem("sessionToken")
+                  const headers = token ? { Authorization: `Bearer ${token}` } : undefined
+                  const response = await fetch(`/api/content/records/${record.id}`, {
+                    method: "DELETE",
+                    headers,
+                  })
+                  if (response.ok) {
+                    setRefreshKey((currentKey) => currentKey + 1)
+                  }
+                } catch (error) {
+                  console.error("[v0] Failed to delete record:", error)
+                }
+              }
+            }}
+            activeStage={activeStageFilter}
+          />
 
-          {/* Client Snapshots - Only show when All Clients selected - New */}
-          {selectedClient === "All Clients" && (
-            <ClientSnapshotRow clients={generateClientSnapshots()} />
-          )}
-
-          {/* Original Pipeline Overview Stats - Kept for backward compatibility */}
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Pipeline Overview</h3>
-            <div className="grid grid-cols-4 gap-6">
-              <div>
-                <p className="text-xs text-gray-600 font-medium mb-1">Total Planned</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {totals.planned}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 font-medium mb-1">Scheduled</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {totals.scheduled}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 font-medium mb-1">Published</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {totals.published}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 font-medium mb-1">Gap</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {totals.planned - totals.published}
-                </p>
-              </div>
+          {/* Clear filter button when active */}
+          {activeStageFilter && (
+            <div className="flex justify-center">
+              <button
+                onClick={() => setActiveStageFilter(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                View All Stages
+              </button>
             </div>
-          </div>
-
-          {/* Client Pipeline */}
-          <div>
-            <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">
-              {selectedClient === "All Clients" ? "All Clients" : selectedClient} - {selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1)}
-            </h2>
-            <ContentClientPipeline 
-              clients={displayClients} 
-              loading={isLoading}
-            />
-          </div>
-
-          <div>
-            <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">
-              Content Records
-            </h2>
-            <ContentVisibilityTable
-              filters={{
-                month: selectedMonth,
-                client: selectedClient,
-              }}
-              refreshKey={refreshKey}
-              onDataChanged={() => setRefreshKey((currentKey) => currentKey + 1)}
-              onEdit={(record) => {
-                setEditingRecord(record)
-                setShowAddModal(true)
-                setActiveTab("tracker")
-              }}
-              onMarkProductionDone={handleMarkProductionDone}
-            />
-          </div>
+          )}
         </div>
       )}
 

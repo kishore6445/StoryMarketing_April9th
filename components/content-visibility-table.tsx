@@ -184,10 +184,7 @@ export default function ContentVisibilityTable({
                   <div className="flex items-center justify-end gap-2">
                     <button
                       type="button"
-                      onClick={() => {
-                        console.log("[v0] Mark production button clicked for:", record.id)
-                        onMarkProductionDone?.(record.id)
-                      }}
+                      onClick={() => onMarkProductionDone?.(record.id)}
                       className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-50"
                       title="Mark as production done"
                     >

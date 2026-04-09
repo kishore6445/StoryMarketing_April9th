@@ -28,31 +28,33 @@ export function ContentPipelineFlow({
   ]
 
   return (
-    <div className="mb-6 p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border border-gray-200">
-      <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Content Pipeline Flow</h3>
+    <div className="mb-8 p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900">Content Pipeline</h2>
+        <p className="text-sm text-gray-600 mt-1">Track content progression through each production stage</p>
+      </div>
       
-      <div className="flex items-center justify-between gap-2 overflow-x-auto pb-2">
+      <div className="flex items-center justify-between gap-4 overflow-x-auto pb-4">
         {stages.map((stage, idx) => (
-          <div key={stage.key} className="flex items-center gap-2 flex-shrink-0">
+          <div key={stage.key} className="flex items-center gap-4 flex-shrink-0">
             <button
               onClick={() => onStageClick?.(stage.key)}
               className={cn(
-                "px-4 py-2 rounded-lg text-center min-w-24 transition-all",
+                "px-6 py-4 rounded-lg text-center min-w-32 transition-all cursor-pointer",
                 stage.color,
-                onStageClick && "cursor-pointer",
-                onStageClick && stage.hoverColor,
-                activeStage === stage.key && "ring-2 ring-blue-500 shadow-md",
-                onStageClick && "hover:shadow-sm"
+                stage.hoverColor,
+                activeStage === stage.key && "ring-3 ring-blue-500 shadow-lg scale-105",
+                "hover:shadow-md"
               )}
               title={`Click to view ${stage.label} items`}
             >
-              <div className="text-lg font-bold">{stage.value}</div>
-              <div className="text-xs font-medium">{stage.label}</div>
+              <div className="text-3xl font-bold">{stage.value}</div>
+              <div className="text-sm font-semibold mt-2">{stage.label}</div>
             </button>
             
             {idx < stages.length - 1 && (
-              <div className="flex items-center gap-1">
-                <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+              <div className="flex items-center">
+                <ChevronRight className="w-6 h-6 text-gray-400 flex-shrink-0" />
               </div>
             )}
           </div>
@@ -61,25 +63,29 @@ export function ContentPipelineFlow({
 
       {/* Drop-off indicators */}
       {target > 0 && (
-        <div className="mt-4 pt-4 border-t border-gray-200 text-xs text-gray-600">
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <span className="font-semibold">Target → Production:</span>
-              <span className="ml-2 text-amber-600 font-medium">
-                {Math.round(((target - productionDone) / target) * 100)}% gap
-              </span>
+        <div className="mt-8 pt-8 border-t border-gray-200">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">Pipeline Health</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-xs text-gray-600 font-semibold uppercase">Target → Production</p>
+              <p className="text-2xl font-bold text-amber-600 mt-2">
+                {Math.round(((target - productionDone) / target) * 100)}%
+              </p>
+              <p className="text-xs text-gray-600 mt-1">of content in production</p>
             </div>
-            <div>
-              <span className="font-semibold">Production → Scheduled:</span>
-              <span className="ml-2 text-blue-600 font-medium">
-                {productionDone > 0 ? Math.round(((productionDone - scheduled) / productionDone) * 100) : 0}% gap
-              </span>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-xs text-gray-600 font-semibold uppercase">Production → Scheduled</p>
+              <p className="text-2xl font-bold text-blue-600 mt-2">
+                {productionDone > 0 ? Math.round(((productionDone - scheduled) / productionDone) * 100) : 0}%
+              </p>
+              <p className="text-xs text-gray-600 mt-1">waiting to be scheduled</p>
             </div>
-            <div>
-              <span className="font-semibold">Scheduled → Published:</span>
-              <span className="ml-2 text-green-600 font-medium">
-                {scheduled > 0 ? Math.round(((scheduled - published) / scheduled) * 100) : 0}% gap
-              </span>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-xs text-gray-600 font-semibold uppercase">Scheduled → Published</p>
+              <p className="text-2xl font-bold text-green-600 mt-2">
+                {scheduled > 0 ? Math.round(((scheduled - published) / scheduled) * 100) : 0}%
+              </p>
+              <p className="text-xs text-gray-600 mt-1">scheduled but not published</p>
             </div>
           </div>
         </div>
