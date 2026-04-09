@@ -13,6 +13,7 @@ export interface ProductionStatusData {
   status: ProductionStatus
   completedAt: string | null
   notes: string | null
+  productionFile?: File
 }
 
 export function getProductionStatusConfig(status: ProductionStatus) {

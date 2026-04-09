@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, CheckCircle2 } from 'lucide-react'
+import { X, CheckCircle2, Upload, File } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ProductionStatusBadge } from './production-status-badge'
 import {
@@ -36,7 +36,32 @@ export function ProductionDoneSheet({
   const [status, setStatus] = useState<ProductionStatus>(currentStatus || 'ready_to_schedule')
   const [completedAt, setCompletedAt] = useState(currentDate || today)
   const [notes, setNotes] = useState(currentNotes || '')
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [uploadPreview, setUploadPreview] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setUploadedFile(file)
+      
+      // Create preview for images
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader()
+        reader.onload = (event) => {
+          setUploadPreview(event.target?.result as string)
+        }
+        reader.readAsDataURL(file)
+      } else {
+        setUploadPreview(null)
+      }
+    }
+  }
+
+  const removeFile = () => {
+    setUploadedFile(null)
+    setUploadPreview(null)
+  }
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -45,6 +70,7 @@ export function ProductionDoneSheet({
         status,
         completedAt,
         notes: notes.trim() || null,
+        productionFile: uploadedFile || undefined,
       })
     } finally {
       setIsSaving(false)
@@ -56,6 +82,7 @@ export function ProductionDoneSheet({
     setStatus(currentStatus || 'ready_to_schedule')
     setCompletedAt(currentDate || today)
     setNotes(currentNotes || '')
+    removeFile()
     onClose()
   }
 
@@ -129,6 +156,51 @@ export function ProductionDoneSheet({
               onChange={(e) => setCompletedAt(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
+          </div>
+
+          {/* File Upload Section */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Production File <span className="text-gray-500 font-normal">(Optional)</span>
+            </label>
+            {!uploadedFile ? (
+              <label className="block">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                  <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-gray-700">Click to upload or drag</p>
+                  <p className="text-xs text-gray-500 mt-1">Images, videos, documents (Max 50MB)</p>
+                </div>
+                <input
+                  type="file"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx"
+                />
+              </label>
+            ) : (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 mt-0.5">
+                    {uploadPreview ? (
+                      <img src={uploadPreview} alt="Preview" className="w-12 h-12 rounded object-cover" />
+                    ) : (
+                      <File className="w-6 h-6 text-green-600" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{uploadedFile.name}</p>
+                    <p className="text-xs text-gray-500">{(uploadedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removeFile}
+                    className="text-red-600 hover:text-red-700 font-medium text-sm"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Additional Notes - Show only for "Needs Review" or "Blocked" */}
