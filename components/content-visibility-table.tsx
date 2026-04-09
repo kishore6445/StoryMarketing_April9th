@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { FileText, AlertCircle, CheckCircle, Clock, Pencil, Trash2 } from "lucide-react"
+import { FileText, AlertCircle, CheckCircle, Clock, Pencil, Trash2, CheckSquare } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { ContentRecordListItem } from "@/lib/content-records"
 
@@ -16,6 +16,7 @@ interface ContentVisibilityTableProps {
   refreshKey?: number
   onEdit?: (record: ContentRecordListItem) => void
   onDataChanged?: () => void
+  onMarkProductionDone?: (recordId: string) => void
   showActions?: boolean
 }
 
@@ -26,6 +27,7 @@ export default function ContentVisibilityTable({
   refreshKey = 0,
   onEdit,
   onDataChanged,
+  onMarkProductionDone,
   showActions = true,
 }: ContentVisibilityTableProps) {
   const [records, setRecords] = useState<ContentRecordListItem[]>([])
@@ -180,6 +182,15 @@ export default function ContentVisibilityTable({
               {showActions && (
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onMarkProductionDone?.(record.id)}
+                      className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-50"
+                      title="Mark as production done"
+                    >
+                      <CheckSquare className="w-3.5 h-3.5" />
+                      Production
+                    </button>
                     <button
                       type="button"
                       onClick={() => onEdit?.(record)}

@@ -11,7 +11,10 @@ import { CommandCenterSummary } from "@/components/command-center-summary"
 import { BottleneckInsightRow } from "@/components/bottleneck-insight-row"
 import { ClientSnapshotRow } from "@/components/client-snapshot-row"
 import { ContentPipelineFlow } from "@/components/content-pipeline-flow"
+import { ProductionDoneSheet } from "@/components/production-done-sheet"
 import type { ContentRecordListItem } from "@/lib/content-records"
+import type { ProductionStatusData } from "@/lib/production-status-types"
+
 
 // Get current month
 const getCurrentMonth = () => {
@@ -51,6 +54,9 @@ export default function ContentVisibilityPage() {
   const [pageError, setPageError] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [editingRecord, setEditingRecord] = useState<ContentRecordListItem | null>(null)
+  const [productionSheetOpen, setProductionSheetOpen] = useState(false)
+  const [selectedContentForProduction, setSelectedContentForProduction] = useState<ContentRecordListItem | null>(null)
+  const [activeStageFilter, setActiveStageFilter] = useState<'target' | 'production_done' | 'scheduled' | 'published' | null>(null)
 
   useEffect(() => {
     const loadContentManagementData = async () => {
@@ -95,6 +101,43 @@ export default function ContentVisibilityPage() {
 
     loadContentManagementData()
   }, [selectedMonth, selectedClient, refreshKey])
+
+  // Handle marking content as production done
+  const handleMarkProductionDone = (contentId: string) => {
+    const content = pipelineRecords.find(r => r.id === contentId)
+    if (content) {
+      setSelectedContentForProduction(content)
+      setProductionSheetOpen(true)
+    }
+  }
+
+  // Handle saving production status
+  const handleSaveProductionStatus = async (productionData: ProductionStatusData) => {
+    if (!selectedContentForProduction) return
+
+    try {
+      // TODO: Send to backend API when schema is ready
+      // For now, this is client-side only (Phase 1)
+      console.log("[v0] Production status saved:", {
+        contentId: selectedContentForProduction.id,
+        productionData,
+      })
+
+      // Show success feedback
+      setProductionSheetOpen(false)
+      setSelectedContentForProduction(null)
+      
+      // Refresh data to show updated status
+      setRefreshKey((currentKey) => currentKey + 1)
+    } catch (error) {
+      console.error("[v0] Failed to save production status:", error)
+    }
+  }
+
+  // Handle pipeline stage click
+  const handlePipelineStageClick = (stage: 'target' | 'production_done' | 'scheduled' | 'published') => {
+    setActiveStageFilter(activeStageFilter === stage ? null : stage)
+  }
 
   const clientOptions = ["All Clients", ...clients.map((client) => client.name)]
 
@@ -361,12 +404,14 @@ export default function ContentVisibilityPage() {
             isAllClients={selectedClient === "All Clients"}
           />
 
-          {/* Content Pipeline Flow Visualization - New */}
+          {/* Content Pipeline Flow Visualization - Now Clickable */}
           <ContentPipelineFlow
             target={totals.planned}
             productionDone={totals.scheduled - totals.published}
             scheduled={totals.scheduled}
             published={totals.published}
+            onStageClick={handlePipelineStageClick}
+            activeStage={activeStageFilter}
           />
 
           {/* Bottleneck Insights - New */}
@@ -460,6 +505,7 @@ export default function ContentVisibilityPage() {
               setEditingRecord(record)
               setShowAddModal(true)
             }}
+            onMarkProductionDone={handleMarkProductionDone}
           />
         </div>
       )}
@@ -477,6 +523,18 @@ export default function ContentVisibilityPage() {
           }}
         />
       )}
+
+      {/* Production Done Sheet */}
+      <ProductionDoneSheet
+        isOpen={productionSheetOpen}
+        onClose={() => {
+          setProductionSheetOpen(false)
+          setSelectedContentForProduction(null)
+        }}
+        onSave={handleSaveProductionStatus}
+        contentTitle={selectedContentForProduction?.title || "Content"}
+        contentId={selectedContentForProduction?.id}
+      />
     </div>
   )
 }

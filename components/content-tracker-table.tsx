@@ -3,6 +3,8 @@
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { ContentDetailsModal } from "./content-details-modal"
+import { ProductionStatusBadge } from "./production-status-badge"
+import { type ProductionStatus } from "@/lib/production-status-types"
 
 interface ContentItem {
   id: string
@@ -11,6 +13,8 @@ interface ContentItem {
   type: string
   status: "In Review" | "In Progress" | "Draft"
   daysOverdue?: number
+  productionStatus?: ProductionStatus
+  productionCompletedAt?: string | null
   workflow: {
     writer: "Done" | "In Progress" | "Not Started"
     editor: "Done" | "In Progress" | "Not Started"
@@ -21,6 +25,7 @@ interface ContentItem {
 
 interface ContentTrackerTableProps {
   data: ContentItem[]
+  onMarkProductionDone?: (itemId: string) => void
 }
 
 const getWorkflowColor = (status: string) => {
@@ -34,7 +39,7 @@ const getWorkflowColor = (status: string) => {
   }
 }
 
-export function ContentTrackerTable({ data }: ContentTrackerTableProps) {
+export function ContentTrackerTable({ data, onMarkProductionDone }: ContentTrackerTableProps) {
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null)
 
   if (data.length === 0) {
@@ -59,7 +64,7 @@ export function ContentTrackerTable({ data }: ContentTrackerTableProps) {
                 <h3 className="text-base font-semibold text-gray-900">{item.title}</h3>
                 <p className="text-sm text-gray-600 mt-1">{item.client} • {item.type}</p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap justify-end">
                 {/* Status Badge */}
                 <span
                   className={cn(
@@ -73,6 +78,14 @@ export function ContentTrackerTable({ data }: ContentTrackerTableProps) {
                 >
                   {item.status}
                 </span>
+
+                {/* Production Status Badge */}
+                <ProductionStatusBadge 
+                  status={item.productionStatus}
+                  completedAt={item.productionCompletedAt}
+                  size="sm"
+                  showLabel
+                />
 
                 {/* Overdue Badge */}
                 {item.daysOverdue && item.daysOverdue > 0 && (
@@ -116,13 +129,29 @@ export function ContentTrackerTable({ data }: ContentTrackerTableProps) {
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-3 pt-2 flex-wrap">
               <button 
                 onClick={() => setSelectedItem(item)}
                 className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
               >
                 View Details
               </button>
+              {!item.productionStatus && onMarkProductionDone && (
+                <button 
+                  onClick={() => onMarkProductionDone(item.id)}
+                  className="text-sm text-green-600 hover:text-green-700 font-medium transition-colors"
+                >
+                  Mark Production Done
+                </button>
+              )}
+              {item.productionStatus && onMarkProductionDone && (
+                <button 
+                  onClick={() => onMarkProductionDone(item.id)}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                >
+                  Update Production Status
+                </button>
+              )}
               <button className="text-sm text-gray-600 hover:text-gray-700 font-medium transition-colors">
                 Add Note
               </button>

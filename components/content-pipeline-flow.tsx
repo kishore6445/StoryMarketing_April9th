@@ -8,6 +8,8 @@ interface ContentPipelineFlowProps {
   productionDone: number
   scheduled: number
   published: number
+  onStageClick?: (stage: 'target' | 'production_done' | 'scheduled' | 'published') => void
+  activeStage?: 'target' | 'production_done' | 'scheduled' | 'published' | null
 }
 
 export function ContentPipelineFlow({
@@ -15,12 +17,14 @@ export function ContentPipelineFlow({
   productionDone,
   scheduled,
   published,
+  onStageClick,
+  activeStage,
 }: ContentPipelineFlowProps) {
   const stages = [
-    { label: "Target", value: target, color: "bg-gray-100 text-gray-700" },
-    { label: "Production Done", value: productionDone, color: "bg-amber-100 text-amber-700" },
-    { label: "Scheduled", value: scheduled, color: "bg-blue-100 text-blue-700" },
-    { label: "Published", value: published, color: "bg-green-100 text-green-700" },
+    { key: "target" as const, label: "Target", value: target, color: "bg-gray-100 text-gray-700", hoverColor: "hover:bg-gray-200" },
+    { key: "production_done" as const, label: "Production Done", value: productionDone, color: "bg-amber-100 text-amber-700", hoverColor: "hover:bg-amber-200" },
+    { key: "scheduled" as const, label: "Scheduled", value: scheduled, color: "bg-blue-100 text-blue-700", hoverColor: "hover:bg-blue-200" },
+    { key: "published" as const, label: "Published", value: published, color: "bg-green-100 text-green-700", hoverColor: "hover:bg-green-200" },
   ]
 
   return (
@@ -29,11 +33,22 @@ export function ContentPipelineFlow({
       
       <div className="flex items-center justify-between gap-2 overflow-x-auto pb-2">
         {stages.map((stage, idx) => (
-          <div key={stage.label} className="flex items-center gap-2 flex-shrink-0">
-            <div className={cn("px-4 py-2 rounded-lg text-center min-w-24", stage.color)}>
+          <div key={stage.key} className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => onStageClick?.(stage.key)}
+              className={cn(
+                "px-4 py-2 rounded-lg text-center min-w-24 transition-all",
+                stage.color,
+                onStageClick && "cursor-pointer",
+                onStageClick && stage.hoverColor,
+                activeStage === stage.key && "ring-2 ring-blue-500 shadow-md",
+                onStageClick && "hover:shadow-sm"
+              )}
+              title={`Click to view ${stage.label} items`}
+            >
               <div className="text-lg font-bold">{stage.value}</div>
               <div className="text-xs font-medium">{stage.label}</div>
-            </div>
+            </button>
             
             {idx < stages.length - 1 && (
               <div className="flex items-center gap-1">
@@ -57,13 +72,13 @@ export function ContentPipelineFlow({
             <div>
               <span className="font-semibold">Production → Scheduled:</span>
               <span className="ml-2 text-blue-600 font-medium">
-                {Math.round(((productionDone - scheduled) / productionDone) * 100)}% gap
+                {productionDone > 0 ? Math.round(((productionDone - scheduled) / productionDone) * 100) : 0}% gap
               </span>
             </div>
             <div>
               <span className="font-semibold">Scheduled → Published:</span>
               <span className="ml-2 text-green-600 font-medium">
-                {Math.round(((scheduled - published) / scheduled) * 100)}% gap
+                {scheduled > 0 ? Math.round(((scheduled - published) / scheduled) * 100) : 0}% gap
               </span>
             </div>
           </div>
