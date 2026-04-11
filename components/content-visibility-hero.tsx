@@ -41,8 +41,7 @@ export function ContentVisibilityHero({
   const [isExpanded, setIsExpanded] = useState(false)
 
   const progress = target > 0 ? (published / target) * 100 : 0
-  const isOnTrack = published >= Math.floor(target * 0.7)
-  const needsAttention = published < Math.floor(target * 0.5) && target > 0
+  const gap = target - published
 
   let statusLabel = "On Track"
   let statusColor = "text-green-600"
@@ -50,66 +49,192 @@ export function ContentVisibilityHero({
   let statusDot = "bg-green-500"
   let statusBorder = "border-green-200"
 
-  if (needsAttention) {
-    statusLabel = "Needs Attention"
-    statusColor = "text-amber-600"
-    statusBg = "bg-amber-50"
-    statusDot = "bg-amber-500"
-    statusBorder = "border-amber-200"
-  } else if (!isOnTrack && target > 0) {
-    statusLabel = "At Risk"
+  if (progress < 40) {
+    statusLabel = "Critical"
     statusColor = "text-red-600"
     statusBg = "bg-red-50"
     statusDot = "bg-red-500"
     statusBorder = "border-red-200"
+  } else if (progress < 70) {
+    statusLabel = "At Risk"
+    statusColor = "text-amber-600"
+    statusBg = "bg-amber-50"
+    statusDot = "bg-amber-500"
+    statusBorder = "border-amber-200"
   }
 
   const getProgressColor = (achieved: number, target: number) => {
     const percentage = target > 0 ? (achieved / target) * 100 : 0
-    if (percentage >= 70) return "bg-green-500"
-    if (percentage >= 40) return "bg-amber-500"
-    return "bg-red-500"
+    if (percentage >= 70) return "bg-green-600"
+    if (percentage >= 40) return "bg-amber-600"
+    return "bg-red-600"
   }
 
-  // Get primary bottleneck (most critical)
   const primaryBottleneck = insights.length > 0 ? insights[0] : null
-  const bottleneckIcon = primaryBottleneck?.type === "shortfall" ? AlertCircle : Clock
 
-  // Recommended action logic
   const getRecommendedAction = () => {
-    if (published < Math.floor(target * 0.7)) {
-      const gap = target - published
-      return `Publish ${gap} more post${gap !== 1 ? "s" : ""} to hit target`
+    if (gap === 0) {
+      return "On pace! Continue monitoring scheduled posts for timely publication."
+    } else if (gap === 1) {
+      return `Publish 1 more post to hit your target of ${target}.`
+    } else if (gap <= 5) {
+      return `Publish the next ${gap} scheduled posts to reach ${target} total.`
+    } else {
+      return `You need ${gap} more posts. Start reviewing and publishing from your queue.`
     }
-    if (scheduled > published) {
-      const pending = scheduled - published
-      return `Review and publish ${pending} scheduled post${pending !== 1 ? "s" : ""}`
-    }
-    return "Continue monitoring publication pace"
   }
 
   return (
     <div className="space-y-4">
-      {/* Hero Card - 5 Second View */}
+      {/* MAIN HERO - Simplified and Dominant */}
       <div
-        onClick={() => setIsExpanded(!isExpanded)}
         className={cn(
-          "bg-white rounded-lg border-2 p-8 cursor-pointer transition-all hover:shadow-lg",
-          statusBg,
+          "bg-white rounded-xl border-2 p-10 transition-all hover:shadow-lg",
           statusBorder
         )}
       >
-        {/* Header with Status */}
-        <div className="flex items-start justify-between mb-8">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              {isExpanded ? (
-                <ChevronUp className="w-5 h-5 text-gray-600" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-gray-600" />
-              )}
-              <h2 className="text-2xl font-bold text-gray-900">Publishing Status</h2>
+        {/* Header Row */}
+        <div className="flex items-center justify-between mb-10">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex items-center gap-2 hover:bg-gray-100 rounded-lg p-2 transition-colors"
+          >
+            {isExpanded ? (
+              <ChevronUp className="w-5 h-5 text-gray-600" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-600" />
+            )}
+            <span className="text-sm text-gray-500">{clientName}</span>
+          </button>
+
+          <div
+            className={cn(
+              "px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2",
+              statusBg,
+              statusColor
+            )}
+          >
+            <span className={cn("w-2.5 h-2.5 rounded-full", statusDot)} />
+            {statusLabel}
+          </div>
+        </div>
+
+        {/* DOMINANT METRIC: Published vs Planned */}
+        <div className="mb-10">
+          <p className="text-xs text-gray-500 font-semibold uppercase tracking-widest mb-6">
+            Publishing Progress
+          </p>
+
+          {/* Large Number Comparison */}
+          <div className="flex items-end justify-center gap-8 mb-8">
+            {/* Published - Left */}
+            <div className="text-center">
+              <p className="text-gray-600 text-sm font-medium mb-2">Published</p>
+              <p className="text-7xl font-black text-green-600">{published}</p>
             </div>
+
+            {/* Divider */}
+            <div className="text-4xl text-gray-300 font-light mb-6">/</div>
+
+            {/* Target - Right */}
+            <div className="text-center">
+              <p className="text-gray-600 text-sm font-medium mb-2">Target</p>
+              <p className="text-7xl font-black text-gray-900">{target}</p>
+            </div>
+          </div>
+
+          {/* Progress Bar - Visual Confirmation */}
+          <div className="mb-6 space-y-3">
+            <div className="w-full bg-gray-200 rounded-full h-3">
+              <div
+                className={cn("h-3 rounded-full transition-all", getProgressColor(published, target))}
+                style={{ width: `${Math.min(progress, 100)}%` }}
+              />
+            </div>
+            <div className="flex justify-between items-center px-1">
+              <span className={cn("text-lg font-bold", statusColor)}>
+                {Math.round(progress)}%
+              </span>
+              {gap > 0 && (
+                <span className="text-sm font-semibold text-red-600">
+                  {gap} {gap === 1 ? "post" : "posts"} to go
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* SEPARATOR */}
+        <div className="border-t border-gray-200 my-8" />
+
+        {/* SECONDARY METRICS - Two Columns */}
+        <div className="grid grid-cols-2 gap-6 mb-8">
+          {/* In Progress */}
+          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <p className="text-xs text-blue-600 font-semibold uppercase tracking-wide mb-2">
+              In Progress
+            </p>
+            <p className="text-3xl font-bold text-blue-600">{productionDone}</p>
+            <p className="text-xs text-blue-600 mt-1">being worked on</p>
+          </div>
+
+          {/* Scheduled */}
+          <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+            <p className="text-xs text-amber-600 font-semibold uppercase tracking-wide mb-2">
+              Scheduled
+            </p>
+            <p className="text-3xl font-bold text-amber-600">{scheduled}</p>
+            <p className="text-xs text-amber-600 mt-1">ready to publish</p>
+          </div>
+        </div>
+
+        {/* CRITICAL INFO SECTION */}
+        {primaryBottleneck && (
+          <div
+            className={cn(
+              "rounded-lg p-4 flex items-start gap-3 mb-6",
+              primaryBottleneck.severity === "high"
+                ? "bg-red-50 border border-red-200"
+                : "bg-amber-50 border border-amber-200"
+            )}
+          >
+            {primaryBottleneck.type === "shortfall" ? (
+              <AlertCircle
+                className={cn(
+                  "w-5 h-5 flex-shrink-0 mt-0.5",
+                  primaryBottleneck.severity === "high" ? "text-red-500" : "text-amber-500"
+                )}
+              />
+            ) : (
+              <Clock
+                className={cn(
+                  "w-5 h-5 flex-shrink-0 mt-0.5",
+                  primaryBottleneck.severity === "high" ? "text-red-500" : "text-amber-500"
+                )}
+              />
+            )}
+            <div className="flex-1">
+              <p
+                className={cn(
+                  "text-sm font-semibold",
+                  primaryBottleneck.severity === "high" ? "text-red-700" : "text-amber-700"
+                )}
+              >
+                {primaryBottleneck.message}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* RECOMMENDED ACTION - Call to Action */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
+          <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5 text-blue-600" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-blue-900">Next Step</p>
+            <p className="text-sm text-blue-700 mt-1">{getRecommendedAction()}</p>
+          </div>
+        </div>
+      </div>
             <p className="text-sm text-gray-500 ml-8">{clientName}</p>
           </div>
 
