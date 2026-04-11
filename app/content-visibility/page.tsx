@@ -357,6 +357,7 @@ export default function ContentVisibilityPage() {
             target={totals.planned}
             published={totals.published}
             scheduled={totals.scheduled}
+            productionDone={totals.scheduled - totals.published}
             insights={generateInsights()}
             platformMetrics={generatePlatformMetrics()}
             clientName={selectedClient === "All Clients" ? `All Clients - ${selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1)}` : selectedClient}

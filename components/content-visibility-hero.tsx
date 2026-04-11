@@ -21,6 +21,7 @@ interface ContentVisibilityHeroProps {
   target: number
   published: number
   scheduled: number
+  productionDone: number
   insights: BottleneckInsight[]
   platformMetrics?: PlatformMetric[]
   clientName?: string
@@ -31,6 +32,7 @@ export function ContentVisibilityHero({
   target,
   published,
   scheduled,
+  productionDone,
   insights,
   platformMetrics = [],
   clientName = "All Clients",
@@ -92,13 +94,13 @@ export function ContentVisibilityHero({
       <div
         onClick={() => setIsExpanded(!isExpanded)}
         className={cn(
-          "bg-white rounded-lg border-2 p-6 cursor-pointer transition-all hover:shadow-lg",
+          "bg-white rounded-lg border-2 p-8 cursor-pointer transition-all hover:shadow-lg",
           statusBg,
           statusBorder
         )}
       >
         {/* Header with Status */}
-        <div className="flex items-start justify-between mb-6">
+        <div className="flex items-start justify-between mb-8">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
               {isExpanded ? (
@@ -106,7 +108,7 @@ export function ContentVisibilityHero({
               ) : (
                 <ChevronDown className="w-5 h-5 text-gray-600" />
               )}
-              <h2 className="text-xl font-bold text-gray-900">Content Publishing Status</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Publishing Status</h2>
             </div>
             <p className="text-sm text-gray-500 ml-8">{clientName}</p>
           </div>
@@ -123,15 +125,46 @@ export function ContentVisibilityHero({
           </div>
         </div>
 
-        {/* Progress Section */}
+        {/* KEY METRICS - 4 Column Grid */}
+        <div className="grid grid-cols-4 gap-4 mb-8 pb-8 border-b border-gray-200">
+          {/* Planned */}
+          <div className="bg-gray-50 rounded-lg p-4 text-center border border-gray-200">
+            <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide mb-2">Planned</p>
+            <p className="text-4xl font-bold text-gray-900">{target}</p>
+            <p className="text-xs text-gray-500 mt-2">total posts</p>
+          </div>
+
+          {/* Production Done */}
+          <div className="bg-blue-50 rounded-lg p-4 text-center border border-blue-200">
+            <p className="text-xs text-blue-600 font-semibold uppercase tracking-wide mb-2">Production Done</p>
+            <p className="text-4xl font-bold text-blue-600">{productionDone}</p>
+            <p className="text-xs text-blue-600 mt-2">in progress</p>
+          </div>
+
+          {/* Scheduled */}
+          <div className="bg-amber-50 rounded-lg p-4 text-center border border-amber-200">
+            <p className="text-xs text-amber-600 font-semibold uppercase tracking-wide mb-2">Scheduled</p>
+            <p className="text-4xl font-bold text-amber-600">{scheduled}</p>
+            <p className="text-xs text-amber-600 mt-2">ready to publish</p>
+          </div>
+
+          {/* Published */}
+          <div className="bg-green-50 rounded-lg p-4 text-center border border-green-200">
+            <p className="text-xs text-green-600 font-semibold uppercase tracking-wide mb-2">Published</p>
+            <p className="text-4xl font-bold text-green-600">{published}</p>
+            <p className="text-xs text-green-600 mt-2">live posts</p>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
         <div className="mb-6 space-y-3">
           <div className="flex items-baseline justify-between">
             <span className="text-sm font-medium text-gray-700">Publication Progress</span>
-            <span className="text-sm text-gray-600">{Math.round(progress)}%</span>
+            <span className={cn("text-lg font-bold", statusColor)}>{Math.round(progress)}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-3">
+          <div className="w-full bg-gray-200 rounded-full h-4">
             <div
-              className={cn("h-3 rounded-full transition-all", getProgressColor(published, target))}
+              className={cn("h-4 rounded-full transition-all", getProgressColor(published, target))}
               style={{ width: `${Math.min(progress, 100)}%` }}
             />
           </div>
@@ -140,22 +173,8 @@ export function ContentVisibilityHero({
               {published} of {target} published
             </span>
             {target - published > 0 && (
-              <span className="text-red-600 font-medium">{target - published} to go</span>
+              <span className="text-red-600 font-medium">{target - published} gap</span>
             )}
-          </div>
-        </div>
-
-        {/* Two Column Info Section */}
-        <div className="grid grid-cols-2 gap-4 mb-6 pb-6 border-b border-gray-200">
-          <div className="space-y-1">
-            <p className="text-xs text-gray-600 font-medium">SCHEDULED</p>
-            <p className="text-2xl font-bold text-blue-600">{scheduled}</p>
-            <p className="text-xs text-gray-500">awaiting publication</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs text-gray-600 font-medium">DAYS LEFT</p>
-            <p className="text-2xl font-bold text-gray-900">~7</p>
-            <p className="text-xs text-gray-500">in current month</p>
           </div>
         </div>
 
