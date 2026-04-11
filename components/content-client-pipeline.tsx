@@ -4,12 +4,20 @@ import { useState } from "react"
 import { ChevronDown, AlertCircle, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+interface PlatformMetric {
+  platform: string
+  target: number
+  published: number
+  scheduled: number
+}
+
 interface ClientPipeline {
   id: string
   name: string
   planned: number
   scheduled: number
   published: number
+  platformMetrics?: PlatformMetric[]
 }
 
 interface ContentClientPipelineProps {
@@ -144,8 +152,9 @@ export function ContentClientPipeline({ clients, loading = false }: ContentClien
 
             {/* Expanded Details */}
             {isExpanded && (
-              <div className="px-4 py-4 bg-gray-50 border-t border-gray-100 space-y-3">
-                <div className="grid grid-cols-3 gap-4">
+              <div className="px-4 py-4 bg-gray-50 border-t border-gray-100 space-y-4">
+                {/* Summary Metrics */}
+                <div className="grid grid-cols-3 gap-4 pb-4 border-b border-gray-200">
                   <div>
                     <p className="text-xs text-gray-600 mb-1">Gap to Publish</p>
                     <p className={cn("text-2xl font-bold", gapStatus.color)}>
@@ -165,6 +174,46 @@ export function ContentClientPipeline({ clients, loading = false }: ContentClien
                     </p>
                   </div>
                 </div>
+
+                {/* Platform Breakdown */}
+                {client.platformMetrics && client.platformMetrics.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Platform Breakdown</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {client.platformMetrics.map((platform) => {
+                        const platformProgress = platform.target > 0 ? (platform.published / platform.target) * 100 : 0
+                        const platformGap = platform.target - platform.published
+                        
+                        let platformStatusColor = "text-green-600"
+                        if (platformGap > 2) platformStatusColor = "text-red-600"
+                        else if (platformGap > 0) platformStatusColor = "text-amber-600"
+
+                        return (
+                          <div key={platform.platform} className="bg-white rounded-lg p-3 border border-gray-200">
+                            <p className="text-xs font-medium text-gray-600 mb-2 capitalize">{platform.platform}</p>
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-gray-600">Published</span>
+                                <span className="text-sm font-bold text-gray-900">{platform.published}/{platform.target}</span>
+                              </div>
+                              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div
+                                  className={cn("h-full transition-all", platformProgress === 100 ? "bg-green-500" : "bg-green-400")}
+                                  style={{ width: `${Math.min(platformProgress, 100)}%` }}
+                                />
+                              </div>
+                              {platformGap > 0 && (
+                                <p className={cn("text-xs font-semibold mt-1", platformStatusColor)}>
+                                  {platformGap} to go
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

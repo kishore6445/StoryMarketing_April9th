@@ -25,6 +25,13 @@ type ClientOption = {
   name: string
 }
 
+type PlatformMetric = {
+  platform: string
+  target: number
+  published: number
+  scheduled: number
+}
+
 type PipelineClient = {
   id: string
   name: string
@@ -32,6 +39,7 @@ type PipelineClient = {
   productionDone: number
   scheduled: number
   published: number
+  platformMetrics?: PlatformMetric[]
 }
 
 const MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
@@ -102,6 +110,7 @@ export default function ContentVisibilityPage() {
   const clientOptions = ["All Clients", ...clients.map((client) => client.name)]
 
   const pipelineMap = new Map<string, PipelineClient>()
+  const platformMetricsMap = new Map<string, Map<string, PlatformMetric>>()
 
   pipelineRecords.forEach((record) => {
     const currentClient = pipelineMap.get(record.client) || {
@@ -111,7 +120,25 @@ export default function ContentVisibilityPage() {
       scheduled: 0,
       published: 0,
       productionDone: 0,
+      platformMetrics: [],
     }
+
+    // Initialize platform tracking for this client if not exists
+    if (!platformMetricsMap.has(record.client)) {
+      platformMetricsMap.set(record.client, new Map<string, PlatformMetric>())
+    }
+    const clientPlatforms = platformMetricsMap.get(record.client)!
+
+    // Initialize platform metric if not exists
+    if (!clientPlatforms.has(record.platform)) {
+      clientPlatforms.set(record.platform, {
+        platform: record.platform,
+        target: 0,
+        published: 0,
+        scheduled: 0,
+      })
+    }
+    const platformMetric = clientPlatforms.get(record.platform)!
 
     const hasPlannedDate = Boolean(record.plannedDate)
     const hasScheduledDate = Boolean(record.scheduledDate)
@@ -124,6 +151,7 @@ export default function ContentVisibilityPage() {
     // Planned: posts with any status or date set
     if (hasPlannedDate || hasScheduledDate || hasPublishedDate || record.status) {
       currentClient.planned += 1
+      platformMetric.target += 1
     }
 
     // Production Done: posts with productionCompletedDate or production_done status
@@ -134,14 +162,24 @@ export default function ContentVisibilityPage() {
     // Scheduled: posts with scheduledDate or scheduled/published status
     if (hasScheduledDate || isScheduledStatus || isPublishedStatus) {
       currentClient.scheduled += 1
+      platformMetric.scheduled += 1
     }
 
     // Published: posts with publishedDate or published status
     if (hasPublishedDate || isPublishedStatus) {
       currentClient.published += 1
+      platformMetric.published += 1
     }
 
     pipelineMap.set(record.client, currentClient)
+  })
+
+  // Attach platform metrics to clients
+  pipelineMap.forEach((client) => {
+    const clientPlatforms = platformMetricsMap.get(client.name)
+    if (clientPlatforms) {
+      client.platformMetrics = Array.from(clientPlatforms.values())
+    }
   })
 
   const displayClients = Array.from(pipelineMap.values())
