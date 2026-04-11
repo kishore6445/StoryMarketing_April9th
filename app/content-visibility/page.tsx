@@ -143,38 +143,6 @@ export default function ContentVisibilityPage() {
 
     pipelineMap.set(record.client, currentClient)
   })
-    }
-  })
-
-  pipelineRecords.forEach((record) => {
-    const currentClient = pipelineMap.get(record.client) || {
-      id: record.clientId,
-      name: record.client,
-      planned: 0,
-      scheduled: 0,
-      published: 0,
-    }
-
-    const hasPlannedDate = Boolean(record.plannedDate)
-    const hasScheduledDate = Boolean(record.scheduledDate)
-    const hasPublishedDate = Boolean(record.publishedDate)
-    const isScheduledStatus = record.status === "SCHEDULED"
-    const isPublishedStatus = record.status === "PUBLISHED"
-
-    if (hasPlannedDate || hasScheduledDate || hasPublishedDate || record.status) {
-      currentClient.planned += 1
-    }
-
-    if (hasScheduledDate || isScheduledStatus || isPublishedStatus) {
-      currentClient.scheduled += 1
-    }
-
-    if (hasPublishedDate || isPublishedStatus) {
-      currentClient.published += 1
-    }
-
-    pipelineMap.set(record.client, currentClient)
-  })
 
   const displayClients = Array.from(pipelineMap.values())
 
