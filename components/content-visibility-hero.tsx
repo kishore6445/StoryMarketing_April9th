@@ -143,9 +143,9 @@ export function ContentVisibilityHero({
 
             {/* Production Done */}
             <div className="bg-blue-50 rounded-lg p-6 border border-blue-200 text-center">
-              <p className="text-xs text-blue-600 font-semibold uppercase tracking-wide mb-3">In Progress</p>
+              <p className="text-xs text-blue-600 font-semibold uppercase tracking-wide mb-3">Production Done</p>
               <p className="text-6xl font-black text-blue-600">{productionDone}</p>
-              <p className="text-xs text-blue-600 mt-2">being worked on</p>
+              <p className="text-xs text-blue-600 mt-2">ready for publishing</p>
             </div>
 
             {/* Scheduled */}
