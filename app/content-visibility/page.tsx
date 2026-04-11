@@ -1,7 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { ChevronDown } from "lucide-react"
 import { Plus, Download, Upload } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 import { ContentClientPipeline } from "@/components/content-client-pipeline"
 import { ContentCalendarView } from "@/components/content-calendar-view"
@@ -11,6 +13,7 @@ import { CommandCenterSummary } from "@/components/command-center-summary"
 import { BottleneckInsightRow } from "@/components/bottleneck-insight-row"
 import { ClientSnapshotRow } from "@/components/client-snapshot-row"
 import { ContentPipelineFlow } from "@/components/content-pipeline-flow"
+import { ContentVisibilityHero } from "@/components/content-visibility-hero"
 import type { ContentRecordListItem } from "@/lib/content-records"
 
 // Get current month
@@ -51,6 +54,7 @@ export default function ContentVisibilityPage() {
   const [pageError, setPageError] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [editingRecord, setEditingRecord] = useState<ContentRecordListItem | null>(null)
+  const [showAdvancedBreakdown, setShowAdvancedBreakdown] = useState(false)
 
   useEffect(() => {
     const loadContentManagementData = async () => {
@@ -350,75 +354,84 @@ export default function ContentVisibilityPage() {
       {/* Tab Content */}
       {activeTab === "pipeline" && (
         <div className="space-y-8">
-          {/* Command Center Summary - New Premium Redesign */}
-          <CommandCenterSummary
+          {/* New Hero Component - 5 Second View */}
+          <ContentVisibilityHero
             target={totals.planned}
-            productionDone={totals.scheduled - totals.published + totals.published}
-            scheduled={totals.scheduled}
             published={totals.published}
-            clientName={selectedClient === "All Clients" ? `All Clients - ${selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1)}` : selectedClient}
+            scheduled={totals.scheduled}
+            insights={generateInsights()}
             platformMetrics={generatePlatformMetrics()}
+            clientName={selectedClient === "All Clients" ? `All Clients - ${selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1)}` : selectedClient}
             isAllClients={selectedClient === "All Clients"}
           />
 
-          {/* Content Pipeline Flow Visualization - New */}
-          <ContentPipelineFlow
-            target={totals.planned}
-            productionDone={totals.scheduled - totals.published}
-            scheduled={totals.scheduled}
-            published={totals.published}
-          />
+          {/* Progressive Disclosure: Advanced Breakdown Toggle */}
+          <button
+            onClick={() => setShowAdvancedBreakdown(!showAdvancedBreakdown)}
+            className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors border border-gray-200"
+          >
+            <ChevronDown
+              className={cn(
+                "w-4 h-4 transition-transform",
+                showAdvancedBreakdown ? "rotate-180" : ""
+              )}
+            />
+            View Advanced Pipeline Breakdown
+          </button>
 
-          {/* Bottleneck Insights - New */}
-          <BottleneckInsightRow insights={generateInsights()} />
+          {/* Advanced Pipeline Views - Hidden by Default */}
+          {showAdvancedBreakdown && (
+            <div className="space-y-6 pt-4 border-t border-gray-200">
+              {/* Content Pipeline Flow Visualization */}
+              <ContentPipelineFlow
+                target={totals.planned}
+                productionDone={totals.scheduled - totals.published}
+                scheduled={totals.scheduled}
+                published={totals.published}
+              />
 
-          {/* Client Snapshots - Only show when All Clients selected - New */}
-          {selectedClient === "All Clients" && (
-            <ClientSnapshotRow clients={generateClientSnapshots()} />
-          )}
+              {/* Client Snapshots - Only show when All Clients selected */}
+              {selectedClient === "All Clients" && (
+                <ClientSnapshotRow clients={generateClientSnapshots()} />
+              )}
 
-          {/* Original Pipeline Overview Stats - Kept for backward compatibility */}
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Pipeline Overview</h3>
-            <div className="grid grid-cols-4 gap-6">
-              <div>
-                <p className="text-xs text-gray-600 font-medium mb-1">Total Planned</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {totals.planned}
-                </p>
+              {/* Pipeline Overview Stats */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                <h3 className="font-semibold text-gray-900 mb-4">Pipeline Statistics</h3>
+                <div className="grid grid-cols-4 gap-6">
+                  <div>
+                    <p className="text-xs text-gray-600 font-medium mb-1">Total Planned</p>
+                    <p className="text-2xl font-bold text-gray-900">{totals.planned}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600 font-medium mb-1">Scheduled</p>
+                    <p className="text-2xl font-bold text-blue-600">{totals.scheduled}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600 font-medium mb-1">Published</p>
+                    <p className="text-2xl font-bold text-green-600">{totals.published}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600 font-medium mb-1">Gap</p>
+                    <p className="text-2xl font-bold text-red-600">{totals.planned - totals.published}</p>
+                  </div>
+                </div>
               </div>
+
+              {/* Client Pipeline */}
               <div>
-                <p className="text-xs text-gray-600 font-medium mb-1">Scheduled</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {totals.scheduled}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 font-medium mb-1">Published</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {totals.published}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 font-medium mb-1">Gap</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {totals.planned - totals.published}
-                </p>
+                <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">
+                  {selectedClient === "All Clients" ? "All Clients" : selectedClient} - {selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1)}
+                </h2>
+                <ContentClientPipeline
+                  clients={displayClients}
+                  loading={isLoading}
+                />
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Client Pipeline */}
-          <div>
-            <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">
-              {selectedClient === "All Clients" ? "All Clients" : selectedClient} - {selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1)}
-            </h2>
-            <ContentClientPipeline 
-              clients={displayClients} 
-              loading={isLoading}
-            />
-          </div>
-
+          {/* Content Records Table */}
           <div>
             <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">
               Content Records
