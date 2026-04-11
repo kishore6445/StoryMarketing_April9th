@@ -119,32 +119,45 @@ export function ContentVisibilityHero({
           </div>
         </div>
 
-        {/* DOMINANT METRIC: Published vs Planned */}
+        {/* FOUR BIG METRICS GRID */}
         <div className="mb-10">
           <p className="text-xs text-gray-500 font-semibold uppercase tracking-widest mb-6">
-            Publishing Progress
+            Publishing Status Overview
           </p>
 
-          {/* Large Number Comparison */}
-          <div className="flex items-end justify-center gap-8 mb-8">
-            {/* Published - Left */}
-            <div className="text-center">
-              <p className="text-gray-600 text-sm font-medium mb-2">Published</p>
-              <p className="text-7xl font-black text-green-600">{published}</p>
+          {/* 4 Column Grid - All Large Numbers */}
+          <div className="grid grid-cols-4 gap-4 mb-8">
+            {/* Target */}
+            <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 text-center">
+              <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide mb-3">Target</p>
+              <p className="text-6xl font-black text-gray-900">{target}</p>
+              <p className="text-xs text-gray-500 mt-2">planned posts</p>
             </div>
 
-            {/* Divider */}
-            <div className="text-4xl text-gray-300 font-light mb-6">/</div>
+            {/* Published */}
+            <div className="bg-green-50 rounded-lg p-6 border border-green-200 text-center">
+              <p className="text-xs text-green-600 font-semibold uppercase tracking-wide mb-3">Published</p>
+              <p className="text-6xl font-black text-green-600">{published}</p>
+              <p className="text-xs text-green-600 mt-2">live posts</p>
+            </div>
 
-            {/* Target - Right */}
-            <div className="text-center">
-              <p className="text-gray-600 text-sm font-medium mb-2">Target</p>
-              <p className="text-7xl font-black text-gray-900">{target}</p>
+            {/* Production Done */}
+            <div className="bg-blue-50 rounded-lg p-6 border border-blue-200 text-center">
+              <p className="text-xs text-blue-600 font-semibold uppercase tracking-wide mb-3">In Progress</p>
+              <p className="text-6xl font-black text-blue-600">{productionDone}</p>
+              <p className="text-xs text-blue-600 mt-2">being worked on</p>
+            </div>
+
+            {/* Scheduled */}
+            <div className="bg-amber-50 rounded-lg p-6 border border-amber-200 text-center">
+              <p className="text-xs text-amber-600 font-semibold uppercase tracking-wide mb-3">Scheduled</p>
+              <p className="text-6xl font-black text-amber-600">{scheduled}</p>
+              <p className="text-xs text-amber-600 mt-2">ready to publish</p>
             </div>
           </div>
 
           {/* Progress Bar - Visual Confirmation */}
-          <div className="mb-6 space-y-3">
+          <div className="space-y-3">
             <div className="w-full bg-gray-200 rounded-full h-3">
               <div
                 className={cn("h-3 rounded-full transition-all", getProgressColor(published, target))}
@@ -153,7 +166,7 @@ export function ContentVisibilityHero({
             </div>
             <div className="flex justify-between items-center px-1">
               <span className={cn("text-lg font-bold", statusColor)}>
-                {Math.round(progress)}%
+                {Math.round(progress)}% complete
               </span>
               {gap > 0 && (
                 <span className="text-sm font-semibold text-red-600">
@@ -166,27 +179,6 @@ export function ContentVisibilityHero({
 
         {/* SEPARATOR */}
         <div className="border-t border-gray-200 my-8" />
-
-        {/* SECONDARY METRICS - Two Columns */}
-        <div className="grid grid-cols-2 gap-6 mb-8">
-          {/* In Progress */}
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-            <p className="text-xs text-blue-600 font-semibold uppercase tracking-wide mb-2">
-              In Progress
-            </p>
-            <p className="text-3xl font-bold text-blue-600">{productionDone}</p>
-            <p className="text-xs text-blue-600 mt-1">being worked on</p>
-          </div>
-
-          {/* Scheduled */}
-          <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
-            <p className="text-xs text-amber-600 font-semibold uppercase tracking-wide mb-2">
-              Scheduled
-            </p>
-            <p className="text-3xl font-bold text-amber-600">{scheduled}</p>
-            <p className="text-xs text-amber-600 mt-1">ready to publish</p>
-          </div>
-        </div>
 
         {/* CRITICAL INFO SECTION */}
         {primaryBottleneck && (
