@@ -29,6 +29,7 @@ type PipelineClient = {
   id: string
   name: string
   planned: number
+  productionDone: number
   scheduled: number
   published: number
 }
@@ -102,15 +103,46 @@ export default function ContentVisibilityPage() {
 
   const pipelineMap = new Map<string, PipelineClient>()
 
-  clients.forEach((client) => {
-    if (selectedClient === "All Clients" || client.name === selectedClient) {
-      pipelineMap.set(client.name, {
-        id: client.id,
-        name: client.name,
-        planned: 0,
-        scheduled: 0,
-        published: 0,
-      })
+  pipelineRecords.forEach((record) => {
+    const currentClient = pipelineMap.get(record.client) || {
+      id: record.clientId,
+      name: record.client,
+      planned: 0,
+      scheduled: 0,
+      published: 0,
+      productionDone: 0,
+    }
+
+    const hasPlannedDate = Boolean(record.plannedDate)
+    const hasScheduledDate = Boolean(record.scheduledDate)
+    const hasPublishedDate = Boolean(record.publishedDate)
+    const hasProductionCompletedDate = Boolean(record.productionCompletedDate)
+    const isScheduledStatus = record.status === "scheduled"
+    const isPublishedStatus = record.status === "published"
+    const isProductionDoneStatus = record.status === "production_done"
+
+    // Planned: posts with any status or date set
+    if (hasPlannedDate || hasScheduledDate || hasPublishedDate || record.status) {
+      currentClient.planned += 1
+    }
+
+    // Production Done: posts with productionCompletedDate or production_done status
+    if (hasProductionCompletedDate || isProductionDoneStatus) {
+      currentClient.productionDone += 1
+    }
+
+    // Scheduled: posts with scheduledDate or scheduled/published status
+    if (hasScheduledDate || isScheduledStatus || isPublishedStatus) {
+      currentClient.scheduled += 1
+    }
+
+    // Published: posts with publishedDate or published status
+    if (hasPublishedDate || isPublishedStatus) {
+      currentClient.published += 1
+    }
+
+    pipelineMap.set(record.client, currentClient)
+  })
     }
   })
 
@@ -149,10 +181,11 @@ export default function ContentVisibilityPage() {
   const totals = displayClients.reduce(
     (accumulator, client) => ({
       planned: accumulator.planned + client.planned,
+      productionDone: accumulator.productionDone + client.productionDone,
       scheduled: accumulator.scheduled + client.scheduled,
       published: accumulator.published + client.published,
     }),
-    { planned: 0, scheduled: 0, published: 0 }
+    { planned: 0, productionDone: 0, scheduled: 0, published: 0 }
   )
 
   // Calculate insights for bottleneck detection
@@ -357,7 +390,7 @@ export default function ContentVisibilityPage() {
             target={totals.planned}
             published={totals.published}
             scheduled={totals.scheduled}
-            productionDone={totals.scheduled - totals.published}
+            productionDone={totals.productionDone}
             insights={generateInsights()}
             platformMetrics={generatePlatformMetrics()}
             clientName={selectedClient === "All Clients" ? `All Clients - ${selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1)}` : selectedClient}
