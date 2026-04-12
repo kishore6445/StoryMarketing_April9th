@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowLeft, Download } from "lucide-react"
+import { ArrowLeft, Download, ChevronDown } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { ClientDetailHero } from "@/components/client-detail-hero"
 import { WeekView } from "@/components/week-view"
 import { MonthView } from "@/components/month-view"
 import { PlatformView } from "@/components/platform-view"
@@ -16,7 +17,7 @@ import {
   categorizePostPerformance,
 } from "@/lib/post-performance-utils"
 
-type ViewType = "week" | "month" | "platform" | "timeline"
+type ViewType = "timeline" | "advanced"
 
 interface Post {
   id: string
@@ -116,6 +117,7 @@ const MOCK_POSTS: Post[] = [
 export default function ClientDetailPage({ params }: { params: { clientId: string } }) {
   const router = useRouter()
   const [viewType, setViewType] = useState<ViewType>("timeline")
+  const [showAdvancedViews, setShowAdvancedViews] = useState(false)
   const [selectedMonth, setSelectedMonth] = useState(3)
   const [selectedYear, setSelectedYear] = useState(2026)
   const [reviewingPostId, setReviewingPostId] = useState<string | null>(null)
@@ -126,6 +128,42 @@ export default function ClientDetailPage({ params }: { params: { clientId: strin
   const totalAchieved = MOCK_POSTS.filter(p => p.published_date).length
   const totalReach = MOCK_POSTS.reduce((sum, p) => sum + (p.reach_metric || 0), 0)
   const totalEngagement = MOCK_POSTS.reduce((sum, p) => sum + (p.engagement_metric || 0), 0)
+  const performancePercent = Math.round((totalAchieved / totalTarget) * 100)
+  
+  // Determine status
+  const clientStatus: "on-track" | "at-risk" | "critical" = 
+    performancePercent >= 70 ? "on-track" : performancePercent >= 40 ? "at-risk" : "critical"
+
+  // Get top and bottom performers
+  const sortedByEngagement = [...MOCK_POSTS]
+    .filter(p => p.published_date)
+    .sort((a, b) => b.engagement_metric - a.engagement_metric)
+  
+  const topPerformer = sortedByEngagement[0]
+    ? {
+        title: sortedByEngagement[0].title,
+        platform: sortedByEngagement[0].platform,
+        reach: sortedByEngagement[0].reach_metric,
+        engagement: sortedByEngagement[0].engagement_metric,
+        engagementRate: calculateEngagementRate(
+          sortedByEngagement[0].engagement_metric,
+          sortedByEngagement[0].reach_metric
+        ),
+      }
+    : undefined
+
+  const needsImprovement = sortedByEngagement[sortedByEngagement.length - 1]
+    ? {
+        title: sortedByEngagement[sortedByEngagement.length - 1].title,
+        platform: sortedByEngagement[sortedByEngagement.length - 1].platform,
+        reach: sortedByEngagement[sortedByEngagement.length - 1].reach_metric,
+        engagement: sortedByEngagement[sortedByEngagement.length - 1].engagement_metric,
+        engagementRate: calculateEngagementRate(
+          sortedByEngagement[sortedByEngagement.length - 1].engagement_metric,
+          sortedByEngagement[sortedByEngagement.length - 1].reach_metric
+        ),
+      }
+    : undefined
 
   const platformMetrics = Array.from(
     new Map(
@@ -160,195 +198,192 @@ export default function ClientDetailPage({ params }: { params: { clientId: strin
     <main className="min-h-screen bg-white">
       {/* Header */}
       <div className="border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </button>
-            <button className="flex items-center gap-2 text-gray-600 hover:text-gray-700">
-              <Download className="w-4 h-4" />
-              Export
-            </button>
-          </div>
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium mb-6"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
 
-          <div className="mb-6">
-            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">{clientName}</h1>
-            <p className="text-gray-500 mt-1">Post performance analytics with 42-day tracking and smart reviews</p>
-          </div>
-
-          {/* Primary Metrics Strip */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Target</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{totalTarget}</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Published</p>
-              <p className="text-3xl font-bold text-green-600 mt-1">{totalAchieved}</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Performance</p>
-              <p className="text-3xl font-bold text-blue-600 mt-1">{Math.round((totalAchieved / totalTarget) * 100)}%</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Reach</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{(totalReach / 1000).toFixed(1)}k</p>
-            </div>
-          </div>
+          {/* Hero Component - 5 Second View */}
+          <ClientDetailHero
+            clientName={clientName}
+            totalTarget={totalTarget}
+            totalAchieved={totalAchieved}
+            performancePercent={performancePercent}
+            daysLeftInMonth={7}
+            topPerformer={topPerformer}
+            needsImprovement={needsImprovement}
+            totalReach={totalReach}
+            status={clientStatus}
+          />
         </div>
       </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-12">
-        {/* View Selector */}
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => setViewType("timeline")}
-              className={cn(
-                "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                viewType === "timeline"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              )}
-            >
-              Performance Timeline
-            </button>
-            <button
-              onClick={() => setViewType("week")}
-              className={cn(
-                "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                viewType === "week"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              )}
-            >
-              By Week
-            </button>
-            <button
-              onClick={() => setViewType("month")}
-              className={cn(
-                "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                viewType === "month"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              )}
-            >
-              By Month
-            </button>
-            <button
-              onClick={() => setViewType("platform")}
-              className={cn(
-                "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                viewType === "platform"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              )}
-            >
-              By Platform
-            </button>
+        {/* Default Timeline View */}
+        <div className="space-y-6 mb-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-gray-900">Post Performance Timeline</h2>
+            <p className="text-sm text-gray-600">{MOCK_POSTS.length} posts in {new Date().toLocaleDateString('en-US', { month: 'long' })}</p>
           </div>
 
-          {viewType !== "platform" && viewType !== "timeline" && (
-            <div className="flex gap-2">
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {Array.from({ length: 12 }, (_, i) => (
-                  <option key={i} value={i}>
-                    {new Date(2026, i).toLocaleDateString('en-US', { month: 'long' })}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value={2026}>2026</option>
-                <option value={2025}>2025</option>
-              </select>
-            </div>
-          )}
-        </div>
+          <div className="space-y-4">
+            {MOCK_POSTS.map((post) => {
+              const snapshots = MOCK_PERFORMANCE_SNAPSHOTS[post.id] || []
+              const latestSnapshot = snapshots[snapshots.length - 1]
+              const engagementRate = latestSnapshot ? calculateEngagementRate(latestSnapshot.engagement, latestSnapshot.reach) : 0
+              const performerType = getPerformerType(engagementRate)
+              const autoInsight = generateAutoInsight(
+                post.platform,
+                engagementRate,
+                latestSnapshot?.reach || 0,
+                latestSnapshot?.engagement || 0,
+                latestSnapshot?.comments || 0,
+                latestSnapshot?.shares || 0,
+                performerType
+              )
 
-        {/* Dynamic Content Area */}
-        <div className="space-y-6">
-          {viewType === "timeline" && (
-            <>
-              <div className="space-y-4">
-                {MOCK_POSTS.map((post) => {
-                  const snapshots = MOCK_PERFORMANCE_SNAPSHOTS[post.id] || []
-                  const latestSnapshot = snapshots[snapshots.length - 1]
-                  const engagementRate = latestSnapshot ? calculateEngagementRate(latestSnapshot.engagement, latestSnapshot.reach) : 0
-                  const performerType = getPerformerType(engagementRate)
-                  const autoInsight = generateAutoInsight(
-                    post.platform,
-                    engagementRate,
-                    latestSnapshot?.reach || 0,
-                    latestSnapshot?.engagement || 0,
-                    latestSnapshot?.comments || 0,
-                    latestSnapshot?.shares || 0,
-                    performerType
-                  )
+              return (
+                <div key={post.id}>
+                  <PostPerformanceTimeline
+                    postTitle={post.title}
+                    platform={post.platform}
+                    snapshots={snapshots}
+                    performerType={performerType}
+                    autoInsight={autoInsight}
+                  />
 
-                  return (
-                    <div key={post.id}>
-                      <PostPerformanceTimeline
+                  {/* Review Section */}
+                  <div className="mt-4 ml-0">
+                    {post.review_text ? (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p className="text-sm font-semibold text-green-900 mb-2">Your Review</p>
+                        <p className="text-sm text-green-800">{post.review_text}</p>
+                        <p className="text-xs text-green-600 mt-2">Submitted on {post.reviewed_at?.toLocaleDateString()}</p>
+                      </div>
+                    ) : reviews[post.id] ? (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p className="text-sm font-semibold text-green-900 mb-2">Your Review</p>
+                        <p className="text-sm text-green-800">{reviews[post.id]}</p>
+                      </div>
+                    ) : reviewingPostId === post.id ? (
+                      <QuickReviewInput
+                        postId={post.id}
                         postTitle={post.title}
                         platform={post.platform}
-                        snapshots={snapshots}
-                        performerType={performerType}
-                        autoInsight={autoInsight}
+                        onSubmit={(review) => handleAddReview(post.id, review)}
+                        onCancel={() => setReviewingPostId(null)}
                       />
-
-                      {/* Review Section */}
-                      <div className="mt-4 ml-0">
-                        {post.review_text ? (
-                          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                            <p className="text-sm font-semibold text-green-900 mb-2">Your Review</p>
-                            <p className="text-sm text-green-800">{post.review_text}</p>
-                            <p className="text-xs text-green-600 mt-2">Submitted on {post.reviewed_at?.toLocaleDateString()}</p>
-                          </div>
-                        ) : reviews[post.id] ? (
-                          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                            <p className="text-sm font-semibold text-green-900 mb-2">Your Review</p>
-                            <p className="text-sm text-green-800">{reviews[post.id]}</p>
-                          </div>
-                        ) : reviewingPostId === post.id ? (
-                          <QuickReviewInput
-                            postId={post.id}
-                            postTitle={post.title}
-                            platform={post.platform}
-                            onSubmit={(review) => handleAddReview(post.id, review)}
-                            onCancel={() => setReviewingPostId(null)}
-                          />
-                        ) : (
-                          <button
-                            onClick={() => setReviewingPostId(post.id)}
-                            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                          >
-                            + Add Quick Review
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </>
-          )}
-
-          {viewType === "week" && <WeekView month={selectedMonth} year={selectedYear} posts={MOCK_POSTS} />}
-          {viewType === "month" && <MonthView month={selectedMonth} year={selectedYear} posts={MOCK_POSTS} />}
-          {viewType === "platform" && <PlatformView posts={MOCK_POSTS} />}
+                    ) : (
+                      <button
+                        onClick={() => setReviewingPostId(post.id)}
+                        className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                      >
+                        + Add Quick Review
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
+
+        {/* Progressive Disclosure: Advanced Views Toggle */}
+        <button
+          onClick={() => setShowAdvancedViews(!showAdvancedViews)}
+          className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors border border-gray-200 mb-8"
+        >
+          <ChevronDown
+            className={cn(
+              "w-4 h-4 transition-transform",
+              showAdvancedViews ? "rotate-180" : ""
+            )}
+          />
+          View Advanced Analytics
+        </button>
+
+        {/* Advanced Views - Hidden by Default */}
+        {showAdvancedViews && (
+          <div className="space-y-8 pt-8 border-t border-gray-200">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">Advanced Views</h3>
+
+              {/* View Selector */}
+              <div className="mb-8 flex flex-wrap gap-2">
+                <button
+                  onClick={() => setViewType("timeline")}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                    viewType === "timeline"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  )}
+                >
+                  Timeline
+                </button>
+                <button
+                  onClick={() => setViewType("advanced")}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                    viewType === "advanced"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  )}
+                >
+                  By Week
+                </button>
+              </div>
+
+              {/* Month/Year Selectors */}
+              <div className="flex gap-2 mb-6">
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <option key={i} value={i}>
+                      {new Date(2026, i).toLocaleDateString('en-US', { month: 'long' })}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value={2026}>2026</option>
+                  <option value={2025}>2025</option>
+                </select>
+              </div>
+
+              {/* Advanced View Content */}
+              <div className="space-y-6">
+                {viewType === "advanced" && (
+                  <>
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-900 mb-4">Week View</h4>
+                      <WeekView month={selectedMonth} year={selectedYear} posts={MOCK_POSTS} />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-900 mb-4">Month View</h4>
+                      <MonthView month={selectedMonth} year={selectedYear} posts={MOCK_POSTS} />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-900 mb-4">Platform View</h4>
+                      <PlatformView posts={MOCK_POSTS} />
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   )

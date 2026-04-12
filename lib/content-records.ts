@@ -1,5 +1,7 @@
 export const CONTENT_STATUS_OPTIONS = [
   { value: "planned", label: "Planned" },
+  { value: "in_production", label: "In Production" },
+  { value: "production_done", label: "Production Done" },
   { value: "scheduled", label: "Scheduled" },
   { value: "published", label: "Published" },
   { value: "pending", label: "Pending" },
@@ -18,6 +20,8 @@ export type ContentRecordFormValues = {
   contentType: string
   platform: string
   plannedDate: string
+  productionStartedDate?: string
+  productionCompletedDate?: string
   scheduledDate: string
   publishedDate: string
   ownerId: string

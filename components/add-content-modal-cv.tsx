@@ -30,6 +30,8 @@ const EMPTY_FORM: ContentRecordFormValues = {
   contentType: "",
   platform: "",
   plannedDate: "",
+  productionStartedDate: "",
+  productionCompletedDate: "",
   scheduledDate: "",
   publishedDate: "",
   ownerId: "",
@@ -373,7 +375,29 @@ export default function AddContentModal({ onClose, onSuccess, initialData }: Add
           {isEditing && (
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-4">
               <h3 className="text-sm font-semibold text-gray-800">Publishing Lifecycle</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Production Started</label>
+                  <input
+                    type="date"
+                    name="productionStartedDate"
+                    value={formData.productionStartedDate || ""}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Production Completed</label>
+                  <input
+                    type="date"
+                    name="productionCompletedDate"
+                    value={formData.productionCompletedDate || ""}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Scheduled Date</label>
                   <input
